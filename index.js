@@ -117,7 +117,7 @@ app.patch('/users/:id', (req, res) => {
   res.status(200).json(db.users);
 });
 
-app.patch('/users/:id', (req, res) => {
+app.patch('/friend/:id', (req, res) => {
   let updatedUserIndex = db.users.findIndex(user => user.id === +req.params.id);
   if (updatedUserIndex === -1) {
     res.status(404).send('User could not be updated because it was not found');
@@ -135,9 +135,12 @@ app.patch('/users/:id', (req, res) => {
     res.status(404).send('User could not be friended because it was not found');
   }
 
-  db.users[updatedUserIndex].push(foundFriend.id);
-
-  res.status(200).json(db.users);
+  if (!db.users[updatedUserIndex].friends.includes(foundFriend.id)) {
+    db.users[updatedUserIndex].friends.push(foundFriend.id);
+    res.status(200).json(db.users);
+  } else {
+    res.status(409).send('User already friended');
+  }
 });
 
 /* PUBLIC CHANNELS */

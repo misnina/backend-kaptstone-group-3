@@ -37,8 +37,8 @@ const user02 = {
   createdAt: Date.now(),
   updatedAt: Date.now(),
   profile: {
-    age: undefined,
-    birthday: undefined,
+    age: null,
+    birthday: null,
     location: '',
     about: 'My freinds are great!',
   },

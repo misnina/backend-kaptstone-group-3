@@ -37,6 +37,15 @@ app.get('/users', (req, res) => {
   res.status(200).json(db.users);
 });
 
+app.get('/users/:id', (req, res) => {
+  let foundUser = db.users.find(user => user.id === +req.params.id);
+  if (!foundUser) {
+    res.status(404).send('User could not be found');
+  }
+
+  res.status(200).json(foundUser);
+})
+
 
 app.post('/users', (req, res) => {
   if (!req.body.username || !req.body.password) {
@@ -123,13 +132,6 @@ app.patch('/friend/:id', (req, res) => {
     res.status(404).send('User could not be updated because it was not found');
   }
 
-  //TODO: make it work better
-
-  // db.users[updatedUserIndex] = {
-  //   ...db.users[updatedUserIndex],
-  //   ...req.body,
-  // }
-
   let foundFriend = db.users.find(user => user.id === +req.body.id);
   if (!(foundFriend)) {
     res.status(404).send('User could not be friended because it was not found');
@@ -140,6 +142,28 @@ app.patch('/friend/:id', (req, res) => {
     res.status(200).json(db.users);
   } else {
     res.status(409).send('User already friended');
+  }
+});
+
+app.delete('/friend/:id', (req, res) => {
+  let updatedUserIndex = db.users.findIndex(user => user.id === +req.params.id);
+  if (updatedUserIndex === -1) {
+    res.status(404).send('User could not be updated because it was not found');
+  }
+
+  let foundFriend = db.users.find(user => user.id === +req.body.id);
+  if (!(foundFriend)) {
+    res.status(404).send('User could not be unfriended because it was not found');
+  }
+
+  if (db.users[updatedUserIndex].friends.includes(foundFriend.id)) {
+    db.users[updatedUserIndex].friends =
+    db.users[updatedUserIndex].friends.filter(friendid => {
+      return friendid !== foundFriend.id
+    });
+    res.status(200).json(db.users);
+  } else {
+    res.status(409).send('User could not be removed from friend because they are not friends with this person.');
   }
 });
 

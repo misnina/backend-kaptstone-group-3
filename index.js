@@ -82,11 +82,6 @@ app.delete('/users/:id', (req, res) => {
 
 
 app.patch('/users/:id', (req, res) => {
-  let foundUser = db.users.find(user => user.id === +req.params.id);
-  if (!foundUser) {
-    res.status(404).send('User could not be deleted because it was not found');
-  }
-
   let updatedUserIndex = db.users.findIndex(user => user.id === +req.params.id);
   if (updatedUserIndex === -1) {
     res.status(404).send('User could not be updated because it was not found');
@@ -120,7 +115,30 @@ app.patch('/users/:id', (req, res) => {
   }
 
   res.status(200).json(db.users);
-})
+});
+
+app.patch('/users/:id', (req, res) => {
+  let updatedUserIndex = db.users.findIndex(user => user.id === +req.params.id);
+  if (updatedUserIndex === -1) {
+    res.status(404).send('User could not be updated because it was not found');
+  }
+
+  //TODO: make it work better
+
+  // db.users[updatedUserIndex] = {
+  //   ...db.users[updatedUserIndex],
+  //   ...req.body,
+  // }
+
+  let foundFriend = db.users.find(user => user.id === +req.body.id);
+  if (!(foundFriend)) {
+    res.status(404).send('User could not be friended because it was not found');
+  }
+
+  db.users[updatedUserIndex].push(foundFriend.id);
+
+  res.status(200).json(db.users);
+});
 
 /* PUBLIC CHANNELS */
 

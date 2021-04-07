@@ -1,5 +1,5 @@
 const express = require('express');
-const db = require('./mockdata');
+let db = require('./mockdata');
 const app = express();
 const port = 3000;
 
@@ -8,12 +8,6 @@ let userid = 2;
 let messageid = 2;
 let public_channelid = 2;
 let private_channelid = 1;
-
-db.public_channels.map(channel => {
-  db.users.map(user => {
-    user.public_channels.push(channel);
-  })
-});
 
 app.use(express.json());
 
@@ -43,6 +37,7 @@ app.get('/users', (req, res) => {
   res.status(200).json(db.users);
 });
 
+
 app.post('/users', (req, res) => {
   if (!req.body.username || !req.body.password) {
     res.status(400).send('Did not include username and/or password');
@@ -71,6 +66,59 @@ app.post('/users', (req, res) => {
   userid++;
 
   db.users.push(newUser);
+  res.status(200).json(db.users);
+});
+
+
+app.delete('/users/:id', (req, res) => {
+  let doesExist = db.users.find(user => user.id === +req.params.id);
+  if (!doesExist) {
+    res.status(404).send('User could not be deleted because it was not found');
+  }
+
+  db.users = db.users.filter(user => !(user.id === +req.params.id));
+  res.status(200).json(db.users);
+});
+
+
+app.patch('/users/:id', (req, res) => {
+  let foundUser = db.users.find(user => user.id === +req.params.id);
+  if (!foundUser) {
+    res.status(404).send('User could not be deleted because it was not found');
+  }
+
+  let updatedUserIndex = db.users.findIndex(user => user.id === +req.params.id);
+  if (updatedUserIndex === -1) {
+    res.status(404).send('User could not be updated because it was not found');
+  }
+
+  //TODO: make it work better
+
+  // db.users[updatedUserIndex] = {
+  //   ...db.users[updatedUserIndex],
+  //   ...req.body,
+  // }
+
+  db.users[updatedUserIndex] = {
+    id: foundUser.id,
+    username: req.body.username || foundUser.username,
+    password: req.body.password || foundUser.password,
+    createdAt: foundUser.createdAt,
+    updatedAt: Date.now(),
+    profile: foundUser.profile || {
+      age: req.body.age || foundUser.age,
+      birthday: 
+        req.body.birthday ?
+        new Date(req.body.birthday)
+        : foundUser.birthday,
+      location: req.body.location || foundUser.location,
+      about: req.body.about || foundUser.about,
+    },
+    friends: foundUser.friends,
+    private_channels: foundUser.private_channels,
+    public_channels: foundUser.public_channels
+  }
+
   res.status(200).json(db.users);
 })
 

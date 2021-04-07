@@ -2,10 +2,6 @@ const dm = {
   id: 0,
   displayName: '',
   messages: [],
-  whitelist: [
-    0,
-    1,
-  ]
 }
 
 const user01 = {
@@ -22,7 +18,7 @@ const user01 = {
   },
   friends: [],
   private_channels: [
-    dm,
+    0,
   ],
   public_channels: [
     0,
@@ -71,7 +67,7 @@ const message02 = {
 }
 
 
-const db = {
+let db = {
   users: [
     user01,
     user02
@@ -90,7 +86,6 @@ const db = {
         message01,
         message02,
       ],
-      blacklist: []
     },
     {
       id: 1,
@@ -102,9 +97,6 @@ const db = {
         `#3`
       ],
       messages: [],
-      blacklist: [
-        0,
-      ]
     },
   ],
   private_channels: {

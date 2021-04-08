@@ -183,7 +183,7 @@ app.get('/channels/private/', (req, res) => {
 
 /* MESSAGES */
 
-app.get('/messages/:access/:id', (req, res) => {
+app.get('/channels/:access/:id/messages/', (req, res) => {
   let accessName = '';
   if (req.params.access === 'public') accessName = 'public_channels';
   if (req.params.access === 'private') accessName = 'private_channels';
@@ -194,7 +194,7 @@ app.get('/messages/:access/:id', (req, res) => {
   res.status(200).json(foundChannel.messages);
 });
 
-app.post('/messages/:access/:id/', (req, res) => {
+app.post('/channels/:access/:id/messages/', (req, res) => {
   //either figure out permissions once we have a token or in frontend
   if (!req.body.author.id && !req.body.text) {
     res.status(400).send("Author and/or message text were not included.");
@@ -221,7 +221,7 @@ app.post('/messages/:access/:id/', (req, res) => {
   res.status(200).json(db[accessName][foundChannelIndex]);
 });
 
-app.delete('/messages/:access/:channelId/:messageId', (req, res) => {
+app.delete('/channels/:access/:channelId/messages/:messageId', (req, res) => {
   let accessName = '';
   if (req.params.access === 'public') accessName = 'public_channels';
   if (req.params.access === 'private') accessName = 'private_channels';
@@ -240,7 +240,7 @@ app.delete('/messages/:access/:channelId/:messageId', (req, res) => {
   res.status(200).json(db[accessName][foundChannelIndex]);
 });
 
-app.patch('/messages/:access/:channelId/:messageId', (req, res) => {
+app.patch('/channels/:access/:channelId/messages/:messageId', (req, res) => {
     if (!req.body.text) {
     res.status(400).send("Author and/or message text were not included.");
   }

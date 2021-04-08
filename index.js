@@ -183,6 +183,92 @@ app.get('/channels/private/', (req, res) => {
 
 /* MESSAGES */
 
+app.get('/messages/:access/:id', (req, res) => {
+  let accessName = '';
+  if (req.params.access === 'public') accessName = 'public_channels';
+  if (req.params.access === 'private') accessName = 'private_channels';
+  if (!accessName) res.status(404).send("Not a correct channel category.");
+
+  let foundChannel = db[accessName].find(channel => +req.params.id === channel.id);
+  if (!foundChannel) res.status(404).send("Could not find channel");
+  res.status(200).json(foundChannel.messages);
+});
+
+app.post('/messages/:access/:id/', (req, res) => {
+  //either figure out permissions once we have a token or in frontend
+  if (!req.body.author.id && !req.body.text) {
+    res.status(400).send("Author and/or message text were not included.");
+  }
+
+  let accessName = '';
+  if (req.params.access === 'public') accessName = 'public_channels';
+  if (req.params.access === 'private') accessName = 'private_channels';
+  if (!accessName) res.status(404).send("Not a correct channel category.");
+
+  let foundChannelIndex = db[accessName].findIndex(channel => +req.params.id === channel.id);
+  if (foundChannelIndex === -1) res.status(404).send("Message could not be sent because the channel could not be found.");
+
+  const newMessage = {
+    id: messageid,
+    author: req.body.author.id,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    text: req.body.text,
+  }
+  messageid++;
+
+  db[accessName][foundChannelIndex].messages.push(newMessage);
+  res.status(200).json(db[accessName][foundChannelIndex]);
+});
+
+app.delete('/messages/:access/:channelId/:messageId', (req, res) => {
+  let accessName = '';
+  if (req.params.access === 'public') accessName = 'public_channels';
+  if (req.params.access === 'private') accessName = 'private_channels';
+  if (!accessName) res.status(404).send("Not a correct channel category.");
+
+  let foundChannelIndex = db[accessName].findIndex(channel => +req.params.channelId === channel.id);
+  if (foundChannelIndex === -1) res.status(404).send("Message could not be deleted because the channel could not be found.");
+
+  const messageIndex = db[accessName][foundChannelIndex].messages.findIndex(message => {
+    return message.id === +req.params.messageId;
+  });
+
+  if (messageIndex === -1) res.status(404).send("Message could not be be found.");
+
+  db[accessName][foundChannelIndex].messages.splice(messageIndex, 1);
+  res.status(200).json(db[accessName][foundChannelIndex]);
+});
+
+app.patch('/messages/:access/:channelId/:messageId', (req, res) => {
+    if (!req.body.text) {
+    res.status(400).send("Author and/or message text were not included.");
+  }
+
+  let accessName = '';
+  if (req.params.access === 'public') accessName = 'public_channels';
+  if (req.params.access === 'private') accessName = 'private_channels';
+  if (!accessName) res.status(404).send("Not a correct channel category.");
+
+  let foundChannelIndex = db[accessName].findIndex(channel => +req.params.channelId === channel.id);
+  if (foundChannelIndex === -1) res.status(404).send("Message could not be deleted because the channel could not be found.");
+
+  const messageIndex = db[accessName][foundChannelIndex].messages.findIndex(message => {
+    return message.id === +req.params.messageId;
+  });
+
+  if (messageIndex === -1) res.status(404).send("Message could not be be found.");
+
+  const updatedMessage = {
+    ...db[accessName][foundChannelIndex].messages[messageIndex],
+    updatedAt: Date.now(),
+    text: req.body.text,
+  }
+  
+  db[accessName][foundChannelIndex].messages[messageIndex] = updatedMessage;
+  res.status(200).json(db[accessName][foundChannelIndex]);
+})
+
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });

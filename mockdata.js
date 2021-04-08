@@ -99,9 +99,9 @@ let db = {
       messages: [],
     },
   ],
-  private_channels: {
+  private_channels: [
     dm,
-  }
+  ]
 }
 
 module.exports = db;

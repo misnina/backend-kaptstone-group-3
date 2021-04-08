@@ -183,6 +183,20 @@ app.get('/channels/private/', (req, res) => {
 
 /* MESSAGES */
 
+app.get('/messages/:access/:id', (req, res) => {
+  let foundChannel = null;
+
+  if (req.params.access === 'public') {
+    foundChannel = db.public_channels.find(channel => +req.params.id === channel.id);
+  } else if (req.params.access === 'private') {
+    //when we get tokens on login, check if the current user is allowed to get the channel data
+    foundChannel = db.private_channels.find(channel => +req.params.id === channel.id);
+  }
+
+  if (!foundChannel) res.status(404).send("Channel could not be found.");
+  res.status(200).json(foundChannel.messages);
+});
+
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });

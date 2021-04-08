@@ -238,6 +238,35 @@ app.delete('/messages/:access/:channelId/:messageId', (req, res) => {
 
   db[accessName][foundChannelIndex].messages.splice(messageIndex, 1);
   res.status(200).json(db[accessName][foundChannelIndex]);
+});
+
+app.patch('/messages/:access/:channelId/:messageId', (req, res) => {
+    if (!req.body.text) {
+    res.status(400).send("Author and/or message text were not included.");
+  }
+
+  let accessName = '';
+  if (req.params.access === 'public') accessName = 'public_channels';
+  if (req.params.access === 'private') accessName = 'private_channels';
+  if (!accessName) res.status(404).send("Not a correct channel category.");
+
+  let foundChannelIndex = db[accessName].findIndex(channel => +req.params.channelId === channel.id);
+  if (foundChannelIndex === -1) res.status(404).send("Message could not be deleted because the channel could not be found.");
+
+  const messageIndex = db[accessName][foundChannelIndex].messages.findIndex(message => {
+    return message.id === +req.params.messageId;
+  });
+
+  if (messageIndex === -1) res.status(404).send("Message could not be be found.");
+
+  const updatedMessage = {
+    ...db[accessName][foundChannelIndex].messages[messageIndex],
+    updatedAt: Date.now(),
+    text: req.body.text,
+  }
+  
+  db[accessName][foundChannelIndex].messages[messageIndex] = updatedMessage;
+  res.status(200).json(db[accessName][foundChannelIndex]);
 })
 
 app.listen(port, () => {

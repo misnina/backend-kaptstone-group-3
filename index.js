@@ -184,17 +184,41 @@ app.get('/channels/private/', (req, res) => {
 /* MESSAGES */
 
 app.get('/messages/:access/:id', (req, res) => {
-  let foundChannel = null;
+  let accessName = '';
+  if (req.params.access === 'public') accessName = 'public_channels';
+  if (req.params.access === 'private') accessName = 'private_channels';
+  if (!accessName) res.status(404).send("Channel could not be found.");
 
-  if (req.params.access === 'public') {
-    foundChannel = db.public_channels.find(channel => +req.params.id === channel.id);
-  } else if (req.params.access === 'private') {
-    //when we get tokens on login, check if the current user is allowed to get the channel data
-    foundChannel = db.private_channels.find(channel => +req.params.id === channel.id);
+  let foundChannel = db[accessName].find(channel => +req.params.id === channel.id);
+  res.status(200).json(foundChannel.messages);
+});
+
+app.post('/messages/:access/:id/', (req, res) => {
+  //either figure out permissions once we have a token or in frontend
+  if (!req.body.author.id && !req.body.text) {
+    res.status(400).send("Author and/or message text were not included.");
   }
 
-  if (!foundChannel) res.status(404).send("Channel could not be found.");
-  res.status(200).json(foundChannel.messages);
+  let accessName = '';
+  if (req.params.access === 'public') accessName = 'public_channels';
+  if (req.params.access === 'private') accessName = 'private_channels';
+  if (!accessName) res.status(404).send("Channel could not be found.");
+
+  let foundChannelIndex = db[accessName].findIndex(channel => +req.params.id === channel.id);
+
+  if (foundChannelIndex === -1) res.status(404).send("Message could not be sent because the channel could not be found.");
+
+  const newMessage = {
+    id: messageid,
+    author: req.body.author.id,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    text: req.body.text,
+  }
+  messageid++;
+
+  db[accessName][foundChannelIndex].messages.push(newMessage);
+  res.status(200).json(db[accessName][foundChannelIndex]);
 });
 
 app.listen(port, () => {

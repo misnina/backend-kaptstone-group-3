@@ -72,6 +72,7 @@ let db = {
     user01,
     user02
   ],
+  messages: [],
   public_channels: [
     {
       id: 0,

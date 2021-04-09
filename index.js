@@ -191,7 +191,7 @@ app.get('/channels/:access/:id/messages/', (req, res) => {
 
   let foundChannel = db[accessName].find(channel => +req.params.id === channel.id);
   if (!foundChannel) res.status(404).send("Could not find channel");
-  res.status(200).json(foundChannel.messages);
+  res.status(200).json(foundChannel);
 });
 
 app.post('/channels/:access/:id/messages/', (req, res) => {

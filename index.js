@@ -1,7 +1,7 @@
 const express = require('express');
 let db = require('./mockdata');
 const app = express();
-const port = 3001;
+const port = 4000;
 const http = require('http');
 const server = http.createServer(app);
 const io = require('socket.io')(server);
@@ -111,10 +111,20 @@ io.on('connect', (socket) => {
     } else console.log('User already friended');
   });
 
-  socket.on('new-message', (message) => {
-    db.messages.push(message)
-    io.sockets.emit('new-message', db.messages)
-    console.log(`New message: ${message}`)
+  socket.on('join-channel', (channel) => {
+    console.log(`Join channel: ${channel}`)
+    socket.join(channel)
+  });
+
+  socket.on('leave-channel', (channel) => {
+    console.log(`Leave channel: ${channel}`)
+    socket.leave(channel)
+  });
+
+  socket.on('new-message', (params) => {
+    requestedChannel = db.channels.find((channel) => channel.name === params.name)
+    requestedChannel.messages.push(params.message)
+    io.to(params.name).emit('new-message', requestedChannel.messages)
   });
 
 

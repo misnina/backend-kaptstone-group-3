@@ -73,36 +73,16 @@ let db = {
     user02
   ],
   messages: [],
-  public_channels: [
+  channels: [
     {
-      id: 0,
       name: 'general',
-      displayName: 'General',
-      rules: [
-        `#1`,
-        `#2`,
-        `#3`
-      ],
-      messages: [
-        message01,
-        message02,
-      ],
+      messages: []
     },
     {
-      id: 1,
-      name: 'gaming',
-      displayName: 'Gaming',
-      rules: [
-        `#1`,
-        `#2`,
-        `#3`
-      ],
-      messages: [],
-    },
-  ],
-  private_channels: {
-    dm,
-  }
+      name: 'random',
+      messages: []
+    }
+  ]
 }
 
 module.exports = db;

@@ -136,56 +136,6 @@ io.on('connect', (socket) => {
   // })
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-// /* PUBLIC CHANNELS */
-
-// app.get('/channels/public/', (req, res) => {
-//   if (db.public_channels === 0) res.status(404).send("Couldn't find any channels");
-//   res.status(200).json(db.public_channels);
-// });
-
-// /* PRIVATE CHANNELS */
-
-// app.get('/channels/private/', (req, res) => {
-//   if (db.private_channels === 0) res.status(404).send("Couldn't find any channels");
-//   res.status(200).json(db.private_channels);
-// });
-
-// app.get('/channel/private/:id', (req, res) => {
-//   let foundChannel = db.private_channels.find((channel) => channel.id === req.params.id)
-//   if (!foundChannel) res.status(404).send(`Couldn't find channel ${req.params.id}`);
-//   res.status(200).json(foundChannel);
-// });
-
-// app.post('/channel/private?adduser', (req, res) => {
-//   if (!req.body.name) res.status(400).send("No name found in body")
-//   if (req.query.adduser) {
-//     let foundChannel = db.private_channels.find((channel) => channel.id === req.params.id)
-//     foundChannel.users.push(req.query.adduser)
-//     res.status(200).json(foundChannel)
-//   } else {
-//     res.status(200).json(db.private_channels)
-//   }
-// });
-
-// app.post('/channel/private?adduser', (req, res) => {
-//   if (!req.body.name) res.status(400).send("No name found in body")
-//   res.status(200).json(db.private_channels)
-// });
-
-// });
-
 // /* MESSAGES */
 
 server.listen(port, () => {

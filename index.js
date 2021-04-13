@@ -111,9 +111,11 @@ io.on('connect', (socket) => {
     } else console.log('User already friended');
   });
 
-  socket.on('join-channel', (channel) => {
-    console.log(`Join channel: ${channel}`)
-    socket.join(channel)
+  socket.on('join-channel', (name) => {
+    console.log(`Join channel: ${name}`)
+    socket.join(name)
+    requestedChannel = db.channels.find((channel) => channel.name === name)
+    io.to(name).emit('get-messages', requestedChannel.messages)
   });
 
   socket.on('leave-channel', (channel) => {
@@ -124,7 +126,7 @@ io.on('connect', (socket) => {
   socket.on('new-message', (params) => {
     requestedChannel = db.channels.find((channel) => channel.name === params.name)
     requestedChannel.messages.push(params.message)
-    io.to(params.name).emit('new-message', requestedChannel.messages)
+    io.to(params.name).emit('new-message', params.message)
   });
 
 

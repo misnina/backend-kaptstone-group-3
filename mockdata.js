@@ -79,7 +79,15 @@ let db = {
       messages: []
     },
     {
-      name: 'random',
+      name: 'books',
+      messages: []
+    },
+    {
+      name: 'tv',
+      messages: []
+    },
+    {
+      name: 'gaming',
       messages: []
     }
   ]

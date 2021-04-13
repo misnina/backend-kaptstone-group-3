@@ -72,35 +72,24 @@ let db = {
     user01,
     user02
   ],
-  public_channels: [
+  messages: [],
+  channels: [
     {
-      id: 0,
       name: 'general',
-      displayName: 'General',
-      rules: [
-        `#1`,
-        `#2`,
-        `#3`
-      ],
-      messages: [
-        message01,
-        message02,
-      ],
+      messages: []
     },
     {
-      id: 1,
-      name: 'gaming',
-      displayName: 'Gaming',
-      rules: [
-        `#1`,
-        `#2`,
-        `#3`
-      ],
-      messages: [],
+      name: 'books',
+      messages: []
     },
-  ],
-  private_channels: [
-    dm,
+    {
+      name: 'tv',
+      messages: []
+    },
+    {
+      name: 'gaming',
+      messages: []
+    }
   ]
 }
 

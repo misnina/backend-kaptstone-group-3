@@ -29,6 +29,17 @@ app.use(function (req, res, next) {
   next();
 });
 
+
+app.get('/:channelName/messages', (req, res) => {
+  const foundChannel = db.channels.find(channel => {
+    return channel.name === req.params.channelName
+  });
+  if (!foundChannel) {
+    res.status(404).send('Test');
+  }
+  res.json(foundChannel.messages);
+});
+
 io.on('connect', (socket) => {
   console.log(`Connection made to new client ${socket.id}`);
 
@@ -116,6 +127,11 @@ io.on('connect', (socket) => {
     socket.join(name)
     requestedChannel = db.channels.find((channel) => channel.name === name)
     io.to(name).emit('get-messages', requestedChannel.messages)
+  });
+
+  socket.on('get-messages', (name) => {
+    requestedChannel = db.channels.find((channel) => channel.name === name);
+    io.to(name).emit('get-messages', requestedChannel.messages);
   });
 
   socket.on('leave-channel', (channel) => {

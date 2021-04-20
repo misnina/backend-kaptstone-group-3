@@ -29,11 +29,43 @@ app.use(function (req, res, next) {
   next();
 });
 
+app.post('/login', (req, res) => {
+  const { username, password } = req.body
+  const user = db.users.find((user) => user.username === username)
+
+  if (user.password === password) {
+    const token = jwt.sign({ createdAt: Date.now() }, secret)
+    user.token = token
+
+    res.send(token)
+  }
+});
+
+app.post('logout', (req, res) => {
+  const { username } = req.body
+  const user = db.users.find((user) => user.username === username)
+
+  user.token = undefined
+})
+
 io.on('connect', (socket) => {
   console.log(`Connection made to new client ${socket.id}`);
 
-  socket.on('test', () => {
-    console.log('Hello World')
+  socket.on('login', (username) => {
+    const user = db.users.find((user) => user.username === username)
+
+    if (user.password === password) {
+      // const token = jwt.sign({ createdAt: Date.now() }, secret)
+      const token = socket.id
+      user.token = token
+
+      io.emit(token)
+    }
+  });
+
+  socket.off('logout', (username) => {
+    const user = db.users.find((user) => user.username === username)
+    user.token = undefined
   });
 
   /* USERS */
@@ -49,10 +81,10 @@ io.on('connect', (socket) => {
     io.broadcast.emit('new-user', db.users); // Since we are changing the database, the updated database must be broadcast to all clients so the can update their state
   });
 
-  socket.on('delete-user', (userid) => {
-    let doesExist = db.users.find(user => user.id === userid);
+  socket.on('delete-user', (token) => {
+    let doesExist = db.users.find(user => user.token === token);
     if (!doesExist) console.log('User could not be deleted because it was not found');
-  
+
     db.users = db.users.filter(user => !(user.id === userid));
     io.broadcast.emit('delete-user', db.users) // Again, we are altering the database, so all clients must be aware of the changes
   });
@@ -60,14 +92,14 @@ io.on('connect', (socket) => {
   socket.on('update-user', (userid) => {
     let updatedUserIndex = db.users.findIndex(user => user.id === userid);
     if (updatedUserIndex === -1) console.log('User could not be updated because it was not found');
-  
+
     //TODO: make it work better
-  
+
     // db.users[updatedUserIndex] = {
     //   ...db.users[updatedUserIndex],
     //   ...req.body,
     // }
-  
+
     db.users[updatedUserIndex] = {
       id: foundUser.id,
       username: req.body.username || foundUser.username,
@@ -76,10 +108,10 @@ io.on('connect', (socket) => {
       updatedAt: Date.now(),
       profile: foundUser.profile || {
         age: req.body.age || foundUser.age,
-        birthday: 
+        birthday:
           req.body.birthday ?
-          new Date(req.body.birthday)
-          : foundUser.birthday,
+            new Date(req.body.birthday)
+            : foundUser.birthday,
         location: req.body.location || foundUser.location,
         about: req.body.about || foundUser.about,
       },
@@ -87,24 +119,24 @@ io.on('connect', (socket) => {
       private_channels: foundUser.private_channels,
       public_channels: foundUser.public_channels
     }
-  
+
     io.broadcast.emit(db.users);
   });
 
   socket.on('add-friend', (params) => {
     let updatedUserIndex = db.users.findIndex(user => user.id === params.userId);
     if (updatedUserIndex === -1) console.log('User could not be updated because it was not found');
-    
+
     //TODO: make it work better
-    
+
     // db.users[updatedUserIndex] = {
     //   ...db.users[updatedUserIndex],
     //   ...req.body,
     // }
-    
+
     let foundFriend = db.users.find(user => user.id === params.friendId);
     if (!(foundFriend)) console.log('User could not be friended because it was not found');
-    
+
     if (!db.users[updatedUserIndex].friends.includes(foundFriend.id)) {
       db.users[updatedUserIndex].friends.push(foundFriend.id);
       io.broadcast.emit(db.users); // Let all clients know
@@ -128,7 +160,6 @@ io.on('connect', (socket) => {
     requestedChannel.messages.push(params.message)
     io.to(params.name).emit('new-message', params.message)
   });
-
 
   // socket.on('disconnect', (socket) => {
   //   console.log('Connection lost')

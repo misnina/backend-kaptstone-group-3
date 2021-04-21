@@ -1,19 +1,15 @@
 const express = require('express');
-let db = require('./mockdata');
 const app = express();
 const port = 4000;
 const http = require('http');
 const server = http.createServer(app);
 const io = require('socket.io')(server);
+const mongoose = require('mongoose');
+const { users, messages } = require('./mockdata');
 
-//until we get uuid or something going, will just count up on each server reset
-let userid = 2;
-let messageid = 2;
-let public_channelid = 2;
-let private_channelid = 1;
+const url = 'mongodb://127.0.0.1:27017/squirl';
 
 app.use(express.json());
-
 app.use(function (req, res, next) {
   // Website you wish to allow to connect
   res.header("Access-Control-Allow-Origin", "*");
@@ -29,145 +25,259 @@ app.use(function (req, res, next) {
   next();
 });
 
-app.post('/login', (req, res) => {
-  const { username, password } = req.body
-  const user = db.users.find((user) => user.username === username)
+mongoose.connect(url, {useNewUrlParser: true, useUnifiedTopology: true});
+const db = mongoose.connection;
+const Schema = mongoose.Schema;
 
-  if (user.password === password) {
-    const token = jwt.sign({ createdAt: Date.now() }, secret)
-    user.token = token
 
-    res.send(token)
-  }
+
+
+/* DATABASE SCHEMAS */
+
+const userSchema = new mongoose.Schema({
+  username: {
+    type: String,
+    required: [true, 'Username is requried']
+  },
+  password: {
+    type: String,
+    required: [true, 'Password is required']
+  },
+  createdAt: Date,
+  updatedAt: Date,
+  profile: {
+    age: Number,
+    birthday: Date,
+    location: String,
+    about: String,
+  },
+  friends: [
+    {type: Schema.Types.ObjectId, ref: 'User'}
+  ]
+});
+const User = mongoose.model('User', userSchema);
+
+
+const messageSchema = new mongoose.Schema({
+  author: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  createdAt: Date,
+  updatedAt: Date,
+  text: {
+    type: String,
+    required: true
+  },
+});
+const Message = mongoose.model('Message', messageSchema);
+
+
+const channelSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+  },
+  displayName: {
+    type: String,
+    required: true,
+  },
+  messages: [
+    {type: Schema.Types.ObjectId, ref: 'Message'}
+  ]
+})
+const Channel = new mongoose.model('Channel', channelSchema);
+
+
+const defaultChannels = ['general', 'books', 'gaming'];
+//create the default channels if they don't exist yet
+defaultChannels.map(channelName => {
+  Channel.findOne({ 'name': channelName }, function (err, channel) {
+    if (channel === null) {
+      const newChannel = new Channel({
+        name: channelName,
+        displayName: channelName.charAt(0).toUpperCase() + channelName.slice(1),
+      });
+      newChannel.save();
+    }
+    //Channel is already created
+  })
+})
+
+const testUser = new User({
+  username: 'LadyDear',
+  password: 'password',
 });
 
-app.post('logout', (req, res) => {
-  const { username } = req.body
-  const user = db.users.find((user) => user.username === username)
-
-  user.token = undefined
+User.findOne({ username: testUser.username }, (err, user) => {
+  if (!user) testUser.save();
 })
+
+
+const findUserList = async () => {
+  let foundUserList = [];
+  await User.find({}, function (err, users) {
+    if (err) return;
+    foundUserList = users;
+  });
+  return foundUserList;
+};
+
+
+app.get('/user/:userid', async (req, res) => {
+  let foundUser = "";
+  foundUser = await User.findById(req.params.userid, (err, user) => {
+    if (err) res.status(404).send('User could not be found');
+    return user
+  });
+
+  if (foundUser) {
+    res.status(200).send(foundUser);
+  }
+  res.status(404).send('User could not be found');
+})
+
+
+
+/* SOCKETS */
 
 io.on('connect', (socket) => {
   console.log(`Connection made to new client ${socket.id}`);
 
-  socket.on('login', (username) => {
-    const user = db.users.find((user) => user.username === username)
-
-    if (user.password === password) {
-      // const token = jwt.sign({ createdAt: Date.now() }, secret)
-      const token = socket.id
-      user.token = token
-
-      io.emit(token)
-    }
+  socket.on('login', async ({username, password}) => {
+    await User.findOne({ username: username, password: password }, function (err, user) {
+      if (err) {
+        io.emit('toast-error', 'Could not login');
+      } else {
+        io.emit('login', user);
+      }
+    });
   });
 
   socket.off('logout', (username) => {
-    const user = db.users.find((user) => user.username === username)
-    user.token = undefined
+    io.emit('logout', true);
   });
 
   /* USERS */
-  socket.on('get-users', () => {
-    if (db.users.length === 0) document.write("Couldn't find any users");
-    io.emit('get-users', db.users);
+  socket.on('get-users', async () => {
+    await User.find({}, function (err, users) {
+      if (err) io.emit('get-users', []);
+      io.emit('get-users', users);
+    })
   });
 
-  socket.on('new-user', (user) => {
-    userid++;
+  socket.on('new-user', async (user) => {
+    const newUser = new User({
+      username: user.username,
+      password: user.password,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    });
 
-    db.users.push(user);
-    io.broadcast.emit('new-user', db.users); // Since we are changing the database, the updated database must be broadcast to all clients so the can update their state
+    await newUser.save((err, user) => {
+      if (err) io.emit('toast-error', 'Could not create user');
+      io.broadcast.emit('new-user', findUserList); // Since we are changing the database, the updated database must be broadcast to all clients so the can update their state
+    });
   });
 
-  socket.on('delete-user', (token) => {
-    let doesExist = db.users.find(user => user.token === token);
-    if (!doesExist) console.log('User could not be deleted because it was not found');
-
-    db.users = db.users.filter(user => !(user.id === userid));
-    io.broadcast.emit('delete-user', db.users) // Again, we are altering the database, so all clients must be aware of the changes
+  socket.on('delete-user', async (user) => {
+    await User.findOne({ username: username, password: password }, function (err, user) {
+      if (err) {
+        io.emit('toast-error', 'Could not find user to delete.');
+      } else {
+        User.deleteOne({ username: user.username }, function (err) {
+          if (err) io.emit('toast-error', 'Could not delete user');
+          io.broadcast.emit('delete-user', findUserList); // Again, we are altering the database, so all clients must be aware of the changes
+        })
+      }
+    });
   });
 
-  socket.on('update-user', (userid) => {
-    let updatedUserIndex = db.users.findIndex(user => user.id === userid);
-    if (updatedUserIndex === -1) console.log('User could not be updated because it was not found');
+  socket.on('update-user', async (user) => {
+    const foundUser = await User.findOne({ id: user.id });
 
-    //TODO: make it work better
+    const update = {...user}
+    foundUser.updateOne(update);
 
-    // db.users[updatedUserIndex] = {
-    //   ...db.users[updatedUserIndex],
-    //   ...req.body,
-    // }
+    const reFoundUser = await User.findOne({ id: user.id });
+    io.broadcast.emit('update-user', reFoundUser);
+  });
 
-    db.users[updatedUserIndex] = {
-      id: foundUser.id,
-      username: req.body.username || foundUser.username,
-      password: req.body.password || foundUser.password,
-      createdAt: foundUser.createdAt,
-      updatedAt: Date.now(),
-      profile: foundUser.profile || {
-        age: req.body.age || foundUser.age,
-        birthday:
-          req.body.birthday ?
-            new Date(req.body.birthday)
-            : foundUser.birthday,
-        location: req.body.location || foundUser.location,
-        about: req.body.about || foundUser.about,
-      },
-      friends: foundUser.friends,
-      private_channels: foundUser.private_channels,
-      public_channels: foundUser.public_channels
+  socket.on('add-friend', async (params) => {
+    const foundUser = await User.findOne({ id: user.id });
+    const foundFriend = await User.findOne({ id: friendId });
+
+    if (!foundUser || !foundFriend ) {
+      io.emit('toast-error', 'Could not complete friend request.');
+      return;
     }
+  
+    foundUser.updateOne({ friends: [
+      ...friends,
+      foundFriend.id,
+    ]});
 
-    io.broadcast.emit(db.users);
+    foundFriend.updateOne({ friends: [
+      ...friends,
+      foundUser.id,
+    ]})
+
+    io.boradcast.emit('add-friend', await findUserList);
   });
 
-  socket.on('add-friend', (params) => {
-    let updatedUserIndex = db.users.findIndex(user => user.id === params.userId);
-    if (updatedUserIndex === -1) console.log('User could not be updated because it was not found');
+  socket.on('join-channel', async (channelName) => {
+    console.log(`Join channel: ${channelName}`)
+    socket.join(channelName);
 
-    //TODO: make it work better
-
-    // db.users[updatedUserIndex] = {
-    //   ...db.users[updatedUserIndex],
-    //   ...req.body,
-    // }
-
-    let foundFriend = db.users.find(user => user.id === params.friendId);
-    if (!(foundFriend)) console.log('User could not be friended because it was not found');
-
-    if (!db.users[updatedUserIndex].friends.includes(foundFriend.id)) {
-      db.users[updatedUserIndex].friends.push(foundFriend.id);
-      io.broadcast.emit(db.users); // Let all clients know
-    } else console.log('User already friended');
+    await Channel.findOne({ name: channelName}, function (err, channel) {
+      if (err) {
+        io.emit('toast-error', 'Could not find the proper channel in the database.');
+        return;
+      };
+    }).populate('messages').exec((err, channel) => {
+      io.to(channelName).emit('get-messages', channel.messages || []);
+    });
   });
 
-  socket.on('join-channel', (name) => {
-    console.log(`Join channel: ${name}`)
-    socket.join(name)
-    requestedChannel = db.channels.find((channel) => channel.name === name)
-    io.to(name).emit('get-messages', requestedChannel.messages)
-  });
+  socket.on('get-messages', async (channelName) => {
+    await Channel.findOne({ name: channelName}, function (err) {
+      if (err) {
+        io.emit('toast-error', 'Could not find the proper channel in the database.');
+        return;
+      };
+    }).populate('messages').exec((err, channel) => {
+      console.log('get-messages:', channel.messages);
+      io.to(channelName).emit('get-messages', channel.messages || []);
+    });
+  })
 
   socket.on('leave-channel', (channel) => {
     console.log(`Leave channel: ${channel}`)
     socket.leave(channel)
   });
 
-  socket.on('new-message', (params) => {
-    requestedChannel = db.channels.find((channel) => channel.name === params.name)
-    requestedChannel.messages.push(params.message)
-    io.to(params.name).emit('new-message', params.message)
+  socket.on('new-message', async (params) => {
+    await Channel.findOne({ name: params.channelName}, function (err, channel) {
+      if (err) io.emit('toast-error', 'Could not find channel to send messages to.');
+      return channel
+    })
+    .populate('messages').exec(async (err, channel) => {
+      const author = await User.findById(params.user.id).exec();
+      const newMessage = new Message({
+        author: author,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        text: params.message,
+      })
+      newMessage.save();
+      channel.messages.push(newMessage);
+      channel.save();
+
+      io.to(params.channelName).emit('new-message', channel.messages);
+    });
   });
-
-  // socket.on('disconnect', (socket) => {
-  //   console.log('Connection lost')
-  //   socket.removeAllListeners();
-  // })
 });
-
-// /* MESSAGES */
 
 server.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);

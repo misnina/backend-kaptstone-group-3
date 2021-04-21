@@ -100,6 +100,74 @@ defaultChannels.map(channelName => {
         displayName: channelName.charAt(0).toUpperCase() + channelName.slice(1),
       });
       newChannel.save();
+
+app.get('/:channelName/messages', (req, res) => {
+  const foundChannel = db.channels.find(channel => {
+    return channel.name === req.params.channelName
+  });
+  if (!foundChannel) {
+    res.status(404).send('Test');
+  }
+  res.json(foundChannel.messages);
+});
+
+io.on('connect', (socket) => {
+  console.log(`Connection made to new client ${socket.id}`);
+
+  socket.on('test', () => {
+    console.log('Hello World')
+  });
+
+  /* USERS */
+  socket.on('get-users', () => {
+    if (db.users.length === 0) document.write("Couldn't find any users");
+    io.emit('get-users', db.users);
+  });
+
+  socket.on('new-user', (user) => {
+    userid++;
+
+    db.users.push(user);
+    io.broadcast.emit('new-user', db.users); // Since we are changing the database, the updated database must be broadcast to all clients so the can update their state
+  });
+
+  socket.on('delete-user', (userid) => {
+    let doesExist = db.users.find(user => user.id === userid);
+    if (!doesExist) console.log('User could not be deleted because it was not found');
+  
+    db.users = db.users.filter(user => !(user.id === userid));
+    io.broadcast.emit('delete-user', db.users) // Again, we are altering the database, so all clients must be aware of the changes
+  });
+
+  socket.on('update-user', (userid) => {
+    let updatedUserIndex = db.users.findIndex(user => user.id === userid);
+    if (updatedUserIndex === -1) console.log('User could not be updated because it was not found');
+  
+    //TODO: make it work better
+  
+    // db.users[updatedUserIndex] = {
+    //   ...db.users[updatedUserIndex],
+    //   ...req.body,
+    // }
+  
+    db.users[updatedUserIndex] = {
+      id: foundUser.id,
+      username: req.body.username || foundUser.username,
+      password: req.body.password || foundUser.password,
+      createdAt: foundUser.createdAt,
+      updatedAt: Date.now(),
+      profile: foundUser.profile || {
+        age: req.body.age || foundUser.age,
+        birthday: 
+          req.body.birthday ?
+          new Date(req.body.birthday)
+          : foundUser.birthday,
+        location: req.body.location || foundUser.location,
+        about: req.body.about || foundUser.about,
+      },
+      friends: foundUser.friends,
+      private_channels: foundUser.private_channels,
+      public_channels: foundUser.public_channels
     }
     //Channel is already created
   })
@@ -114,6 +182,15 @@ User.findOne({ username: testUser.username }, (err, user) => {
   if (!user) testUser.save();
 })
 
+  socket.on('get-messages', (name) => {
+    requestedChannel = db.channels.find((channel) => channel.name === name);
+    io.to(name).emit('get-messages', requestedChannel.messages);
+  });
+
+  socket.on('leave-channel', (channel) => {
+    console.log(`Leave channel: ${channel}`)
+    socket.leave(channel)
+  });
 
 const findUserList = async () => {
   let foundUserList = [];

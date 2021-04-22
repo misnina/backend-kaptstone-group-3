@@ -43,13 +43,25 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Password is required']
   },
-  createdAt: Date,
-  updatedAt: Date,
+  createdAt: {
+    type: Date, default: Date.now()
+  },
+  updatedAt: {
+    type: Date, default: Date.now()
+  },
   profile: {
-    age: Number,
-    birthday: Date,
-    location: String,
-    about: String,
+    age: {
+      type: Number, default: null
+    },
+    birthday: {
+      type: Date, default: null
+    },
+    location: {
+      type: String, defult: null
+    },
+    about: {
+      type: String, default: null
+    },
   },
   friends: [
     {type: Schema.Types.ObjectId, ref: 'User'}
@@ -114,7 +126,7 @@ app.get('/:channelName/messages', (req, res) => {
 });
 
 const testUser = new User({
-  username: 'LadyDear',
+  username: 'BuddyDude',
   password: 'password',
 });
 
@@ -162,8 +174,8 @@ io.on('connect', (socket) => {
     });
   });
 
-  socket.off('logout', (username) => {
-    io.emit('logout', true);
+  socket.off('logout', () => {
+    io.emit('logout');
   });
 
   /* USERS */
@@ -175,6 +187,7 @@ io.on('connect', (socket) => {
   });
 
   socket.on('new-user', async (user) => {
+    console.log(user);
     const newUser = new User({
       username: user.username,
       password: user.password,
@@ -184,8 +197,10 @@ io.on('connect', (socket) => {
 
     await newUser.save((err, user) => {
       if (err) io.emit('toast-error', 'Could not create user');
-      io.broadcast.emit('new-user', findUserList); // Since we are changing the database, the updated database must be broadcast to all clients so the can update their state
     });
+
+    io.broadcast.emit('new-user', findUserList);
+
   });
 
   socket.on('delete-user', async (user) => {
@@ -202,13 +217,29 @@ io.on('connect', (socket) => {
   });
 
   socket.on('update-user', async (user) => {
-    const foundUser = await User.findOne({ id: user.id });
+    let foundUser = await User.findOne({ id: user.id });
+    const profileUpdate = {
+      age: user.profile.age || foundUser.profile.age,
+      birthday: user.profile.birthday || foundUser.profile.birthday,
+      location: user.profile.location || foundUser.profile.location,
+      about: user.profile.about || foundUser.profile.about,
+    }
 
-    const update = {...user}
-    foundUser.updateOne(update);
+    console.log(user);
+    foundUser.username = user.username || foundUser.username;
+    foundUser.password = user.passowrd || foundUser.password
+    foundUser.profile = profileUpdate;
+    await foundUser.save();
+    //await User.updateOne({ _id: user.id }, update);
+    //await foundUser.save();
 
-    const reFoundUser = await User.findOne({ id: user.id });
-    io.broadcast.emit('update-user', reFoundUser);
+    await User.find({}, function (err, users) {
+      if (err) io.emit('toast-error', "Could not grab all users");
+      io.emit('update-user', users);
+    }).catch(err => {
+      console.log(err);
+    })
+    console.log('updating user');
   });
 
   socket.on('add-friend', async (params) => {
@@ -254,7 +285,6 @@ io.on('connect', (socket) => {
         return;
       };
     }).populate('messages').exec((err, channel) => {
-      console.log('get-messages:', channel.messages);
       io.to(channelName).emit('get-messages', channel.messages || []);
     });
   })

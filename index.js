@@ -9,9 +9,8 @@ const io = require("socket.io")(server,
     origins: ["*"],
     handlePreflightRequest: (req, res) => {
       res.writeHead(200, {
-        "Access-Control-Allow-Origin": "https://dry-spire-38380.herokuapp.com",
+        "Access-Control-Allow-Origin": "http://dry-spire-38380.herokuapp.com",
         "Access-Control-Allow-Methods": "GET,POST",
-        "Access-Control-Allow-Headers": "my-custom-header",
         "Access-Control-Allow-Credentials": true
       });
     res.end();
@@ -22,14 +21,14 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 const corsOptions = {
-  origin: 'https://dry-spire-38380.herokuapp.com'
+  origin: 'http://dry-spire-38380.herokuapp.com'
 }
 app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(function (req, res, next) {
   // Website you wish to allow to connect
-  res.header("Access-Control-Allow-Origin", "https://dry-spire-38380.herokuapp.com");
+  res.header("Access-Control-Allow-Origin", "http://dry-spire-38380.herokuapp.com");
   res.header(
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept"

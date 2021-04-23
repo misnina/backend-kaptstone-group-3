@@ -6,6 +6,7 @@ const server = http.createServer(app);
 const io = require("socket.io")(server, {
   cors: {
     origin: 'https://dry-spire-38380.herokuapp.com/',
+    methods: ["*"],
     allowedHeaders: [
       "Access-Control-Allow-Origin",
       "Access-Control-Allow-Headers",

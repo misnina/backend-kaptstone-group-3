@@ -1,12 +1,20 @@
 const express = require('express');
 const app = express();
 const port = process.env.PORT || 4000;
-const http = require('http');
-const server = http.createServer(app);
+const https = require('https');
+const server = https.createServer(app);
 const io = require("socket.io")(server, {
   cors: {
     origin: "https://dry-spire-38380.herokuapp.com",
-    methods: ["GET", "POST"]
+    methods: ["GET", "POST"],
+    credentials: true,
+    allowedHeaders: [
+      "Access-Control-Allow-Origin",
+      "Access-Control-Allow-Headers",
+      "Origin, X-Requested-With, Content-Type, Accept",
+      "Access-Control-Allow-Methods",
+      "GET, POST, OPTIONS, PUT, PATCH, DELETE",
+    ],
   }
 });
 const mongoose = require('mongoose');

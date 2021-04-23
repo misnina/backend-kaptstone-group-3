@@ -20,12 +20,15 @@ const cors = require('cors');
 //   }
 // }
 
-//app.use(cors());
-app.options('*', cors());
+const corsOptions = {
+  origin: 'https://dry-spire-38380.herokuapp.com/'
+}
+app.use(cors(corsOptions));
+
 app.use(express.json());
 app.use(function (req, res, next) {
   // Website you wish to allow to connect
-  res.header("Access-Control-Allow-Origin", `*`);
+  res.header("Access-Control-Allow-Origin", "*");
   res.header(
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept"

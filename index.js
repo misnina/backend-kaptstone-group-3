@@ -34,7 +34,7 @@ app.use(function (req, res, next) {
 
 app.use(cors());
 
-mongoose.connect(`mongodb+srv://kenzie:group3@squirl.wtd5c.mongodb.net/Squirl?retryWrites=true&w=majority` || url, {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.connect(process.env.MONGODB_URI || url, {useNewUrlParser: true, useUnifiedTopology: true});
 const db = mongoose.connection;
 const Schema = mongoose.Schema;
 

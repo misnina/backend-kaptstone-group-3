@@ -3,12 +3,14 @@ const app = express();
 const port = process.env.PORT || 4000;
 const http = require('http');
 const server = http.createServer(app);
-const io = require('socket.io')(server);
+const io = require("socket.io")(server, {
+  cors: {
+    origin: "https://dry-spire-38380.herokuapp.com/",
+    methods: ["GET", "POST"]
+  }
+});
 const mongoose = require('mongoose');
-const { users, messages } = require('./mockdata');
 const cors = require('cors');
-
-const url = 'mongodb://127.0.0.1:27017/squirl';
 
 app.use(express.json());
 app.use(function (req, res, next) {

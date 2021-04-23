@@ -10,21 +10,26 @@ const { users, messages } = require('./mockdata');
 const url = 'mongodb://127.0.0.1:27017/squirl';
 
 app.use(express.json());
-// app.use(function (req, res, next) {
-//   // Website you wish to allow to connect
-//   res.header("Access-Control-Allow-Origin", "*");
-//   res.header(
-//     "Access-Control-Allow-Headers",
-//     "Origin, X-Requested-With, Content-Type, Accept"
-//   );
-//   res.header(
-//     "Access-Control-Allow-Methods",
-//     "GET, POST, OPTIONS, PUT, PATCH, DELETE"
-//   );
+app.use(function (req, res, next) {
+  // Website you wish to allow to connect
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept"
+  );
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, OPTIONS, PUT, PATCH, DELETE"
+  );
 
-//   next();
-// });
-app.use(cors());
+  if (req.method === 'OPTIONS') {
+    res.header('Access-Control-Allow-Methods', 'PUT, POST, PATCH, DELETE, OPTIONS');
+    res.header('Access-Control-Max-Age', 120);
+    return res.status(200).json({});
+  }
+
+  next();
+});
 
 mongoose.connect(process.env.MONGODB_URI || url, {useNewUrlParser: true, useUnifiedTopology: true});
 const db = mongoose.connection;
@@ -334,6 +339,8 @@ io.on('connect', (socket) => {
   });
 });
 
-server.listen(port, () => {
+server
+  .use((req, res) => res.sendFile(INDEX, { root: __dirname }))
+  .listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });

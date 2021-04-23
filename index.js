@@ -3,22 +3,21 @@ const app = express();
 const port = process.env.PORT || 4000;
 const http = require('http');
 const server = http.createServer(app);
-const io = require("socket.io")(server);
+const io = require("socket.io")(server,
+  {
+  cors: {
+    origin: 'https://dry-spire-38380.herokuapp.com',
+    methods: ["GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"],
+    allowedHeaders: [
+      "Access-Control-Allow-Origin",
+      "Access-Control-Allow-Headers",
+      "Access-Control-Allow-Methods",
+    ],
+    credentials: true,
+  }
+});
 const mongoose = require('mongoose');
 const cors = require('cors');
-
-// {
-//   cors: {
-//     origin: 'https://dry-spire-38380.herokuapp.com/',
-//     methods: ["GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"],
-//     allowedHeaders: [
-//       "Access-Control-Allow-Origin",
-//       "Access-Control-Allow-Headers",
-//       "Access-Control-Allow-Methods",
-//     ],
-//     credentials: true,
-//   }
-// }
 
 const corsOptions = {
   origin: 'https://dry-spire-38380.herokuapp.com/'

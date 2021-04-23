@@ -6,6 +6,7 @@ const server = http.createServer(app);
 const io = require('socket.io')(server);
 const mongoose = require('mongoose');
 const { users, messages } = require('./mockdata');
+const cors = require('cors');
 
 const url = 'mongodb://127.0.0.1:27017/squirl';
 

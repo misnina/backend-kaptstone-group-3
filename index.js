@@ -13,6 +13,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 app.use(cors());
+app.options('*', cors());
 app.use(express.json());
 app.use(function (req, res, next) {
   // Website you wish to allow to connect
@@ -26,11 +27,11 @@ app.use(function (req, res, next) {
     "GET, POST, OPTIONS, PUT, PATCH, DELETE"
   );
 
-  if (req.method === 'OPTIONS') {
-    res.header('Access-Control-Allow-Methods', 'PUT, POST, PATCH, DELETE, OPTIONS');
-    res.header('Access-Control-Max-Age', 120);
-    return res.status(200).json({});
-  }
+  // if (req.method === 'OPTIONS') {
+  //   res.header('Access-Control-Allow-Methods', 'PUT, POST, PATCH, DELETE, OPTIONS');
+  //   res.header('Access-Control-Max-Age', 120);
+  //   return res.status(200).json({});
+  // }
 
   next();
 });

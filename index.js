@@ -10,7 +10,8 @@ const io = require("socket.io")(server, {
       "Access-Control-Allow-Origin",
       "Access-Control-Allow-Headers",
       "Access-Control-Allow-Methods",
-    ]
+    ],
+    credentials: true,
   }
 });
 const mongoose = require('mongoose');

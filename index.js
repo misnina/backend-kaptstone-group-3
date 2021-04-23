@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express();
-const port = 4000;
+const port = process.env.PORT || 4000;
 const http = require('http');
 const server = http.createServer(app);
 const io = require('socket.io')(server);
@@ -25,7 +25,7 @@ app.use(function (req, res, next) {
   next();
 });
 
-mongoose.connect(url, {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.connect(process.env.MONGODB_URI || url, {useNewUrlParser: true, useUnifiedTopology: true});
 const db = mongoose.connection;
 const Schema = mongoose.Schema;
 
@@ -161,6 +161,7 @@ app.get('/user/:userid', async (req, res) => {
 
 app.patch('/user/:userid', async (req, res) => {
   let foundUser = await User.findOne({ _id: req.params.userid });
+  console.log(req.params.userid);
   console.log(req.body);
   const profileUpdate = {
     age: req.body.profile.age || foundUser.profile.age,

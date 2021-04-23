@@ -153,13 +153,36 @@ app.get('/user/:userid', async (req, res) => {
 
   if (foundUser) {
     res.status(200).send(foundUser);
+    return;
   }
   res.status(404).send('User could not be found');
+  return;
 })
 
+app.patch('/user/:userid', async (req, res) => {
+  let foundUser = await User.findOne({ _id: req.params.userid });
+  console.log(req.body);
+  const profileUpdate = {
+    age: req.body.profile.age || foundUser.profile.age,
+    birthday: req.body.profile.birthday || foundUser.profile.birthday,
+    location: req.body.profile.location || foundUser.profile.location,
+    about: req.body.profile.about || foundUser.profile.about,
+  }
 
+  foundUser.username = req.body.username || foundUser.username;
+  foundUser.password = req.body.passowrd || foundUser.password
+  foundUser.profile = profileUpdate;
+  await foundUser.save((err, user) => {
+    if (err) res.status(409).send('Could not save the user changes');
+    res.status(200).send(user);
+  });
+})
 
 /* SOCKETS */
+/*
+  We are using sockets to post messages to
+  our front end.
+*/
 
 io.on('connect', (socket) => {
   console.log(`Connection made to new client ${socket.id}`);
@@ -169,13 +192,13 @@ io.on('connect', (socket) => {
       if (err) {
         io.emit('toast-error', 'Could not login');
       } else {
-        io.emit('login', user);
+        io.to(socket.id).emit('login', user);
       }
     });
   });
 
   socket.off('logout', () => {
-    io.emit('logout');
+    io.to(socket.id).emit('logout');
   });
 
   /* USERS */
@@ -214,32 +237,6 @@ io.on('connect', (socket) => {
         })
       }
     });
-  });
-
-  socket.on('update-user', async (user) => {
-    let foundUser = await User.findOne({ id: user.id });
-    const profileUpdate = {
-      age: user.profile.age || foundUser.profile.age,
-      birthday: user.profile.birthday || foundUser.profile.birthday,
-      location: user.profile.location || foundUser.profile.location,
-      about: user.profile.about || foundUser.profile.about,
-    }
-
-    console.log(user);
-    foundUser.username = user.username || foundUser.username;
-    foundUser.password = user.passowrd || foundUser.password
-    foundUser.profile = profileUpdate;
-    await foundUser.save();
-    //await User.updateOne({ _id: user.id }, update);
-    //await foundUser.save();
-
-    await User.find({}, function (err, users) {
-      if (err) io.emit('toast-error', "Could not grab all users");
-      io.emit('update-user', users);
-    }).catch(err => {
-      console.log(err);
-    })
-    console.log('updating user');
   });
 
   socket.on('add-friend', async (params) => {
@@ -300,7 +297,7 @@ io.on('connect', (socket) => {
       return channel
     })
     .populate('messages').exec(async (err, channel) => {
-      const author = await User.findById(params.user.id).exec();
+      const author = await User.findById(params.user._id).exec();
       const newMessage = new Message({
         author: author,
         createdAt: Date.now(),

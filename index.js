@@ -5,7 +5,7 @@ const http = require('http');
 const server = http.createServer(app);
 const io = require("socket.io")(server, {
   cors: {
-    origin: "https://dry-spire-38380.herokuapp.com/",
+    origin: "https://dry-spire-38380.herokuapp.com",
     methods: ["GET", "POST"]
   }
 });
@@ -26,11 +26,11 @@ app.use(function (req, res, next) {
     "GET, POST, OPTIONS, PUT, PATCH, DELETE"
   );
 
-  // if (req.method === 'OPTIONS') {
-  //   res.header('Access-Control-Allow-Methods', 'PUT, POST, PATCH, DELETE, OPTIONS');
-  //   res.header('Access-Control-Max-Age', 120);
-  //   return res.status(200).json({});
-  // }
+  if (req.method === 'OPTIONS') {
+    res.header('Access-Control-Allow-Methods', 'PUT, POST, PATCH, DELETE, OPTIONS');
+    res.header('Access-Control-Max-Age', 120);
+    return res.status(200).json({});
+  }
 
   next();
 });

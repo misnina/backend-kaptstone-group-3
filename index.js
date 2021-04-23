@@ -176,7 +176,28 @@ app.patch('/user/:userid', async (req, res) => {
     if (err) res.status(409).send('Could not save the user changes');
     res.status(200).send(user);
   });
-})
+});
+
+app.post('/users', async (req, res) => {
+  const newUser = new User({
+    username: req.body.username,
+    password: req.body.password,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  });
+
+  await newUser.save((err, user) => {
+    if (err) res.status(400).send('User could not be created');
+    res.status(200).send(user);
+  });
+});
+
+app.delete('/user/:userid', async (req, res) => {
+  await User.deleteOne({ _id: req.params.userid }, (err) => {
+    if (err) res.status(400).send('User could not be deleted');
+    res.status(200).send('User deleted sucesffuly');
+  })
+});
 
 /* SOCKETS */
 /*
@@ -220,10 +241,8 @@ io.on('connect', (socket) => {
 
     await newUser.save((err, user) => {
       if (err) io.emit('toast-error', 'Could not create user');
+      io.emit('new-user', user);
     });
-
-    io.broadcast.emit('new-user', findUserList);
-
   });
 
   socket.on('delete-user', async (user) => {

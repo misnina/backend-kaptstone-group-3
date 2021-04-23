@@ -7,19 +7,12 @@ const io = require("socket.io")(server, {
   cors: {
     origin: "https://dry-spire-38380.herokuapp.com",
     methods: ["GET", "POST"],
-    allowedHeaders: [
-      "Access-Control-Allow-Origin",
-      "Access-Control-Allow-Headers",
-      'Access-Control-Allow-Methods',
-      'Access-Control-Max-Age',
-    ],
-    credentials: true,
   }
 });
 const mongoose = require('mongoose');
 const cors = require('cors');
 
-app.use(cors());
+//app.use(cors());
 app.options('*', cors());
 app.use(express.json());
 app.use(function (req, res, next) {

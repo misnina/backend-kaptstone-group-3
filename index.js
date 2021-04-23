@@ -8,10 +8,6 @@ const io = require("socket.io")(server, {
     origin: "https://dry-spire-38380.herokuapp.com",
     methods: ["GET", "POST"],
     credentials: true,
-    allowedHeaders: [
-      "Access-Control-Allow-Origin",
-      "Access-Control-Allow-Headers",
-    ],
   }
 });
 const mongoose = require('mongoose');
@@ -32,11 +28,11 @@ app.use(function (req, res, next) {
     "GET, POST, OPTIONS, PUT, PATCH, DELETE"
   );
 
-  // if (req.method === 'OPTIONS') {
-  //   res.header('Access-Control-Allow-Methods', 'PUT, POST, PATCH, DELETE, OPTIONS');
-  //   res.header('Access-Control-Max-Age', 120);
-  //   return res.status(200).json({});
-  // }
+  if (req.method === 'OPTIONS') {
+    res.header('Access-Control-Allow-Methods', 'PUT, POST, PATCH, DELETE, OPTIONS');
+    res.header('Access-Control-Max-Age', 120);
+    return res.status(200).json({});
+  }
 
   next();
 });

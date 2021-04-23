@@ -16,29 +16,29 @@ const io = require("socket.io")(server, {
 const mongoose = require('mongoose');
 const cors = require('cors');
 
-app.use(cors());
+//app.use(cors());
 app.options('*', cors());
 app.use(express.json());
-// app.use(function (req, res, next) {
-//   // Website you wish to allow to connect
-//   res.header("Access-Control-Allow-Origin", `https://dry-spire-38380.herokuapp.com:${process.env.PORT}`);
-//   res.header(
-//     "Access-Control-Allow-Headers",
-//     "Origin, X-Requested-With, Content-Type, Accept"
-//   );
-//   res.header(
-//     "Access-Control-Allow-Methods",
-//     "GET, POST, OPTIONS, PUT, PATCH, DELETE"
-//   );
+app.use(function (req, res, next) {
+  // Website you wish to allow to connect
+  res.header("Access-Control-Allow-Origin", `https://dry-spire-38380.herokuapp.com`);
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept"
+  );
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, OPTIONS, PUT, PATCH, DELETE"
+  );
 
-//   if (req.method === 'OPTIONS') {
-//     res.header('Access-Control-Allow-Methods', 'PUT, POST, PATCH, DELETE, OPTIONS');
-//     res.header('Access-Control-Max-Age', 120);
-//     return res.status(200).json({});
-//   }
+  if (req.method === 'OPTIONS') {
+    res.header('Access-Control-Allow-Methods', 'PUT, POST, PATCH, DELETE, OPTIONS');
+    res.header('Access-Control-Max-Age', 120);
+    return res.status(200).json({});
+  }
 
-//   next();
-// });
+  next();
+});
 
 
 mongoose.connect(`mongodb+srv://kenzie:group3@squirl.wtd5c.mongodb.net/Squirl?retryWrites=true&w=majority` || url, {useNewUrlParser: true, useUnifiedTopology: true});

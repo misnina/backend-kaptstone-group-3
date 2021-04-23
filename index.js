@@ -9,7 +9,7 @@ const io = require("socket.io")(server,
     origins: ["*"],
     handlePreflightRequest: (req, res) => {
       res.writeHead(200, {
-        "Access-Control-Allow-Origin": "http://dry-spire-38380.herokuapp.com",
+        "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET,POST",
         "Access-Control-Allow-Credentials": true
       });
@@ -21,7 +21,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 const corsOptions = {
-  origin: 'http://dry-spire-38380.herokuapp.com'
+  origin: "*"
 }
 app.use(cors(corsOptions));
 

@@ -10,20 +10,21 @@ const { users, messages } = require('./mockdata');
 const url = 'mongodb://127.0.0.1:27017/squirl';
 
 app.use(express.json());
-app.use(function (req, res, next) {
-  // Website you wish to allow to connect
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
-  );
-  res.header(
-    "Access-Control-Allow-Methods",
-    "GET, POST, OPTIONS, PUT, PATCH, DELETE"
-  );
+// app.use(function (req, res, next) {
+//   // Website you wish to allow to connect
+//   res.header("Access-Control-Allow-Origin", "*");
+//   res.header(
+//     "Access-Control-Allow-Headers",
+//     "Origin, X-Requested-With, Content-Type, Accept"
+//   );
+//   res.header(
+//     "Access-Control-Allow-Methods",
+//     "GET, POST, OPTIONS, PUT, PATCH, DELETE"
+//   );
 
-  next();
-});
+//   next();
+// });
+app.use(cors());
 
 mongoose.connect(process.env.MONGODB_URI || url, {useNewUrlParser: true, useUnifiedTopology: true});
 const db = mongoose.connection;

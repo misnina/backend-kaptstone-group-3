@@ -5,8 +5,7 @@ const https = require('https');
 const server = https.createServer(app);
 const io = require("socket.io")(server, {
   cors: {
-    origin: "https://dry-spire-38380.herokuapp.com",
-    methods: ["GET", "POST"],
+    origin: '*',
   }
 });
 const mongoose = require('mongoose');

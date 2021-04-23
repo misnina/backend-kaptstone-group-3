@@ -6,14 +6,16 @@ const server = http.createServer(app);
 const io = require("socket.io")(server,
   {
   cors: {
-    origin: 'https://dry-spire-38380.herokuapp.com',
-    methods: ["GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"],
-    allowedHeaders: [
-      "Access-Control-Allow-Origin",
-      "Access-Control-Allow-Headers",
-      "Access-Control-Allow-Methods",
-    ],
-    credentials: true,
+    origins: ["*"],
+    handlePreflightRequest: (req, res) => {
+      res.writeHead(200, {
+        "Access-Control-Allow-Origin": "https://example.com",
+        "Access-Control-Allow-Methods": "GET,POST",
+        "Access-Control-Allow-Headers": "my-custom-header",
+        "Access-Control-Allow-Credentials": true
+      });
+    res.end();
+    }
   }
 });
 const mongoose = require('mongoose');
